@@ -28,14 +28,23 @@ Some configuration parameters can be changed with environment variables:
 
 #### Configuration file
 
-You can also mount YAML configuration files in the `/conf.d` folder, they will automatically be copied to `/etc/dd-agent/conf.d/` when the container starts.  The same can be done for the `/checks.d` folder. Any Python files in the `/checks.d` folder will automatically be copied to `/etc/dd-agent/checks.d/` when the container starts.
+You can also mount YAML configuration files in the `/app/` folder to any sub-path.  The files MUST end in .yaml, any and all files found recursively underneath /app with .yaml will be auto-included.  Do NOT mount to /app alone.
 
-1. Create a configuration folder on the host and write your YAML files in it.  The examples below can be used for the `/checks.d` folder as well.
+Use the example queries.yaml.sample as a starting point.  Once you're happy with it... mount it to your instance on runtime.  You can mount a file, or a folder full of files.
 
-    ```
-    mkdir /opt/dd-agent-conf.d
-    touch /opt/dd-agent-conf.d/nginx.yaml
-    ```
+```
+docker run -d --name pgsql-datadog-statsd \
+  -v ./queries.yaml.sample:/app/queries.yaml:ro \
+  -e DATABASE_URI="postgres://test:test@localhost/test" \
+  PUT_DOCKER_URL_HERE
+```
+or
+```
+docker run -d --name pgsql-datadog-statsd \
+  -v /path/to/configs:/app/my_configs:ro \
+  -e DATABASE_URI="postgres://test:test@localhost/test" \
+  PUT_DOCKER_URL_HERE
+```
 
 ## Contribute
 
