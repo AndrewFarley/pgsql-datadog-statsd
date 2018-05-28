@@ -142,8 +142,10 @@ while True:
             print("Fetching {} - {}".format(key, query))
             result = fetchOne(current_cursor, query)
         except psycopg2.ProgrammingError as e:
-            print("Error, skipping key: {}".format(key))
+            print("Bad query or some other error occurred, skipping key: {}".format(key))
             current_conn.rollback()
+            exc_info = sys.exc_info()
+            traceback.print_exception(*exc_info)
             continue
         except:
             print("Unknown exception while fetching key")
