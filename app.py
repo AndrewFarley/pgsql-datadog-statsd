@@ -24,7 +24,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 STATSD_HOST=os.environ.get('STATSD_HOST', 'localhost')
 print("Using STATSD_HOST: {}".format(STATSD_HOST))
 STATSD_PORT=os.environ.get('STATSD_PORT', '8125')
-print("Using STATSD_PORT: {}".format(STATSD_HOST))
+print("Using STATSD_PORT: {}".format(STATSD_PORT))
 initialize(
     statsd_host=STATSD_HOST,
     statsd_port=STATSD_PORT,
