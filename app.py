@@ -21,10 +21,14 @@ print(separator)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Initialize datadog
-STATSD_HOST=os.environ.get('STATSD_HOST', 'localhost')
-print("Using STATSD_HOST: {}".format(STATSD_HOST))
+STATSD_HOST=os.environ.get('STATSD_HOST')
+if not STATSD_HOST:
+    print("ERROR: No STATSD_HOST specified")
+    time.sleep(5)
+    exit(1)
+print("          STATSD_HOST: {}".format(STATSD_HOST))
 STATSD_PORT=os.environ.get('STATSD_PORT', '8125')
-print("Using STATSD_PORT: {}".format(STATSD_PORT))
+print("          STATSD_PORT: {}".format(STATSD_PORT))
 initialize(
     statsd_host=STATSD_HOST,
     statsd_port=STATSD_PORT,
@@ -32,17 +36,21 @@ initialize(
 
 # Time increment (in seconds)
 TIME_BETWEEN_REQUESTS = int(os.environ.get('TIME_BETWEEN_REQUESTS', 60))
-print("Using TIME_BETWEEN_REQUESTS: {}".format(TIME_BETWEEN_REQUESTS))
+print("TIME_BETWEEN_REQUESTS: {}".format(TIME_BETWEEN_REQUESTS))
 
 # Initialize database configuration from Connection URL String
-DB_URI = os.environ.get('DATABASE_URI', 'postgres://test:test@localhost/test')
+DB_URI = os.environ.get('DATABASE_URI')
+if not DB_URI:
+    print("ERROR: No DB_URI specified")
+    time.sleep(5)
+    exit(1)
 result = urlparse.urlparse(DB_URI)
 username = result.username
 password = result.password
 hostname = result.hostname
 port     = result.port if result.port else 5432
 database = result.path[1:]
-print("Using DB_URI: postgres://{}:<omitted>@{}:{}/{}".format(username, hostname, port, database))
+print("               DB_URI: postgres://{}:<omitted>@{}:{}/{}".format(username, hostname, port, database))
 
 # Re-usable connection global
 connection = False
@@ -110,14 +118,13 @@ for file in glob.glob("{}/**/*.yaml".format(dir_path)):
         new_queries = yaml.safe_load(f)
         queries = merge_dicts(queries, new_queries)
 
-print("Found queries:")
+print("Queries (via yaml)")
 if not queries or len(queries) < 1:
     print("  ERROR: NONE FOUND, please mount some into a subfolder of /app")
     time.sleep(60)
     exit(1)
 for key, value in queries.items():
-    print("  Key: {}".format(key))
-    print("    Value: {}".format(value))
+    print("  {} : {}".format(key, value))
     
 # Then connect to our database and/or make sure the DB connection is functional
 current_conn = getPGSQLConnection()
