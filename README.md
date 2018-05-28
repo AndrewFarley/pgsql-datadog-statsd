@@ -38,6 +38,8 @@ Some configuration parameters can be changed with environment variables:
   * This one is REQUIRED to set
 * `STATSD_PORT` is the port of the STATSD_HOST we want to push stats to, defaults to `8125`
 * `TIME_BETWEEN_REQUESTS` is the amount of time in seconds we want in-between stats requests, default `60`
+* `DATABASE_USERNAME` is the database username, this is to be able to OVERRIDE what is set in `DATABASE_URI` (to support k8s secret mounts)
+* `DATABASE_PASSWORD` is the database password, this is to be able to OVERRIDE what is set in `DATABASE_URI` (to support k8s secret mounts)
 
 #### Configuration file
 

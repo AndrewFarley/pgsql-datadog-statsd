@@ -45,8 +45,8 @@ if not DB_URI:
     time.sleep(5)
     exit(1)
 result = urlparse.urlparse(DB_URI)
-username = result.username
-password = result.password
+username = os.environ.get('DATABASE_USERNAME', result.username)
+password = os.environ.get('DATABASE_PASSWORD', result.password)
 hostname = result.hostname
 port     = result.port if result.port else 5432
 database = result.path[1:]
