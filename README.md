@@ -11,14 +11,20 @@ Simple to use...
  * Optionally set the `TIME_BETWEEN_REQUESTS` if you don't want it to run once a minute (eg: 5 seconds instead)
 
 ```
+# Just for a PoC, when you deploy it you'll probably just run the last command
+docker network create my-network
+docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d -P --net=my-network postgres
 mkdir sample-pgsql-datadog-statsd
 echo 'servicename.test.set: "select 5"' > sample-pgsql-datadog-statsd/sample.yaml
+# NOTE: You may omit the --net when you deploy this on your environment
+# especially with kubernetes, it's just for a working PoC here
 docker run --name pgsql-datadog-statsd \
+  --net my-network \
   -v `pwd`/sample-pgsql-datadog-statsd:/app/test:ro \
   -e STATSD_HOST=host.name.or.ip.should.go.here \
   -e STATSD_PORT=8125 \
   -e TIME_BETWEEN_REQUESTS=60 \
-  -e DATABASE_URI="postgresql://kong:kong@172.17.0.2/kong" \
+  -e DATABASE_URI="postgresql://postgres:mysecretpassword@some-postgres/template1" \
   andrewfarley/pgsql-datadog-statsd
 ```
 
