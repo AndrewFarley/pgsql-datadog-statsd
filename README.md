@@ -5,46 +5,38 @@ This is a simple docker image to perform stats-gathering queries from PostgreSQL
 ## Quick Start
 
 Simple to use...
+ * First make a configuration file (see: ![queries.yaml.sample](./queries.yaml.sample))
+ * Mount that configuration file into the app folder and run via Docker
+ * Make sure to set your STATSD_HOST and DATABASE_URI!
 
 ```
-docker run -d --name pgsql-datadog-statsd \
-  -v /queries.yaml.sample:/app/queries.yaml:ro \
-  -e DATABASE_URI="postgres://test:test@localhost/test" \
-  PUT_DOCKER_URL_HERE
+mkdir sample-pgsql-datadog-statsd
+echo 'servicename.test.set: "select 5"' > sample-pgsql-datadog-statsd/sample.yaml
+docker run --name pgsql-datadog-statsd \
+  -v `pwd`/sample-pgsql-datadog-statsd:/app/test:ro \
+  -e STATSD_HOST=host.name.should.go.here \
+  -e STATSD_PORT=8125 \
+  -e TIME_BETWEEN_REQUESTS=5 \
+  -e DATABASE_URI="postgresql://kong:kong@172.17.0.2/kong" \
+  andrewfarley/pgsql-datadog-statsd
 ```
-
-## Configuration
-
-TODO
 
 ### Environment variables
 
 Some configuration parameters can be changed with environment variables:
 
+* `DATABASE_URI` is the database uri we want to connect to.  Default: `postgres://test:test@localhost/test`
+  * This one is generally REQUIRED to set, because the default won't really work
 * `STATSD_HOST` is the hostname we want to push stats to, defaults to `localhost`
+  * This one is generally REQUIRED to set, because the default won't really go anywhere, no internal statsd listener
 * `STATSD_PORT` is the port of the STATSD_HOST we want to push stats to, defaults to `8125`
 * `TIME_BETWEEN_REQUESTS` is the amount of time in seconds we want in-between stats requests, default `60`
-* `DATABASE_URI` is the database uri we want to connect to.  Default: `postgres://test:test@localhost/test`
 
 #### Configuration file
 
-You can also mount YAML configuration files in the `/app/` folder to any sub-path.  The files MUST end in .yaml, any and all files found recursively underneath /app with .yaml will be auto-included.  Do NOT mount to /app alone.
+You will also need to mount YAML configuration files in the `/app/` folder to any sub-path.  The files MUST end in .yaml, any and all files found recursively underneath `/app` with .yaml will be auto-included.  WARNING: Do NOT mount to `/app` directly, use a subpath, eg: `/app/configs`.
 
-Use the example queries.yaml.sample as a starting point.  Once you're happy with it... mount it to your instance on runtime.  You can mount a file, or a folder full of files.
-
-```
-docker run -d --name pgsql-datadog-statsd \
-  -v ./queries.yaml.sample:/app/queries.yaml:ro \
-  -e DATABASE_URI="postgres://test:test@localhost/test" \
-  PUT_DOCKER_URL_HERE
-```
-or
-```
-docker run -d --name pgsql-datadog-statsd \
-  -v /path/to/configs:/app/my_configs:ro \
-  -e DATABASE_URI="postgres://test:test@localhost/test" \
-  PUT_DOCKER_URL_HERE
-```
+Use the example ![queries.yaml.sample](./queries.yaml.sample) as a starting point.  Once you're happy with it... mount it to your instance on runtime.  You can mount it to a file or a folder full of files, up to you.
 
 ## Contribute
 

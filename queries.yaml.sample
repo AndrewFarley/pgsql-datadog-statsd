@@ -14,12 +14,12 @@
 # database or service in any way.  Also, preferably standardize your tag names
 # Eg: service.SERVICENAME.STAT_GROUP.STATNAME or service.SERVICENAME.STATNAME
 # Recommendations:
-#    service.trading.transfers.completed
-#    service.trading.transfers.pending
+#    service.trading.transfers.completed.gauge
+#    service.trading.transfers.pending.gauge
 
 # A sample service, trading, with various states for entries to be in
-service.trading.transfers.pending: "select count(*) from transfers where state = 'submitted'"
-service.trading.transfers.completed: "select count(*) from transfers where state = 'completed'"
+service.trading.transfers.pending.gauge: "select count(*) from transfers where state = 'submitted'"
+service.trading.transfers.completed.gauge: "select count(*) from transfers where state = 'completed'"
 
 # This one should work always, since it doesn't rely on a table, just to show this working, you should see this in your statsd server
 servicename.test.set: "select 5"

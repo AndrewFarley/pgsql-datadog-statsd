@@ -12,6 +12,7 @@ import time
 import urlparse
 import psycopg2
 
+# Print on startup
 print("Starting up...")
 separator = "=========================="
 print(separator)
@@ -20,22 +21,28 @@ print(separator)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Initialize datadog
+STATSD_HOST=os.environ.get('STATSD_HOST', 'localhost')
+print("Using STATSD_HOST: {}".format(STATSD_HOST))
+STATSD_PORT=os.environ.get('STATSD_PORT', '8125')
+print("Using STATSD_PORT: {}".format(STATSD_HOST))
 initialize(
-    statsd_host=os.environ.get('STATSD_HOST', 'localhost'),
-    statsd_port=os.environ.get('STATSD_PORT', '8125'),
+    statsd_host=STATSD_HOST,
+    statsd_port=STATSD_PORT,
 )
 
 # Time increment (in seconds)
-time_between_request = int(os.environ.get('TIME_BETWEEN_REQUESTS', 60))
+TIME_BETWEEN_REQUESTS = int(os.environ.get('TIME_BETWEEN_REQUESTS', 60))
+print("Using TIME_BETWEEN_REQUESTS: {}".format(TIME_BETWEEN_REQUESTS))
 
 # Initialize database configuration from Connection URL String
-DBURI = os.environ.get('DATABASE_URI', 'postgres://test:test@localhost/test')
-result = urlparse.urlparse(DBURI)
+DB_URI = os.environ.get('DATABASE_URI', 'postgres://test:test@localhost/test')
+result = urlparse.urlparse(DB_URI)
 username = result.username
 password = result.password
-database = result.path[1:]
 hostname = result.hostname
 port     = result.port if result.port else 5432
+database = result.path[1:]
+print("Using DB_URI: postgres://{}:<omitted>@{}:{}/{}".format(username, hostname, port, database))
 
 # Re-usable connection global
 connection = False
@@ -71,10 +78,10 @@ def getPGSQLConnection(retries=0):
             connection = False
 
     if retries >= 5:
-        raise Exception("Unable to connect to database {}".format(DBURI))
+        raise Exception("Unable to connect to database {}".format(DB_URI))
         exit(1)
 
-    print("Trying to connect to database {}".format(DBURI))
+    print("Trying to connect to database {}".format(DB_URI))
 
     try:
         connection = psycopg2.connect( 
@@ -104,6 +111,10 @@ for file in glob.glob("{}/**/*.yaml".format(dir_path)):
         queries = merge_dicts(queries, new_queries)
 
 print("Found queries:")
+if not queries or len(queries) < 1:
+    print("  ERROR: NONE FOUND, please mount some into a subfolder of /app")
+    time.sleep(60)
+    exit(1)
 for key, value in queries.items():
     print("  Key: {}".format(key))
     print("    Value: {}".format(value))
@@ -149,7 +160,7 @@ while True:
             print("Exception while trying to call statsd: {}".format(e))
 
     # If we have taken too little time, wait until the next recurrance time
-    time_remaining = time_between_request - (time.time() - start)
+    time_remaining = TIME_BETWEEN_REQUESTS - (time.time() - start)
     if time_remaining > 0:
         print('Waiting for: {} seconds'.format(time_remaining))
         time.sleep(time_remaining)

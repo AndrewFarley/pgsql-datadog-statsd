@@ -1,2 +1,5 @@
 #!/bin/sh
-exec /app/app.py
+# Grab our env vars from docker
+. /etc/envvars
+# Run our app
+exec python -u /app/app.py 2>&1
