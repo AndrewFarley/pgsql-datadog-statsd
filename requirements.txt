@@ -1,0 +1,8 @@
+# For datadog
+datadog
+
+# For PGSQL
+psycopg2-binary
+
+# For YAML
+pyyaml

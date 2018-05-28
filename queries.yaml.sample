@@ -1,0 +1,25 @@
+# The queries we want to gather.  All queries MUST return a single value 
+# (eg: limit 1) as only the first row, and the first column of that row 
+# will cascade into stats.  The stats name should be namespaced to make sense.
+# Additionally, the last octet MUST be a "function" name in statsd for Datadog.
+# Valid functions are...
+#    gauge: Samples the value for use in traditional graphs (this is the MOST common)
+#    increment/decrement: For collecting the total occurances of something triggering
+#    timing: For collecting information about how long something took (in ms)
+#    set: Setting a value to something.  Use this for collecting text data into a metric
+#    histogram: Samples the value for uses in a histogram, to get 95th percentile, medians, etc
+# See: http://datadogpy.readthedocs.io/en/latest/#datadog.dogstatsd.base.DogStatsd
+
+# Please make sure all queries in here hit indexes only as to not affect your
+# database or service in any way.  Also, preferably standardize your tag names
+# Eg: service.SERVICENAME.STAT_GROUP.STATNAME or service.SERVICENAME.STATNAME
+# Recommendations:
+#    service.trading.transfers.completed
+#    service.trading.transfers.pending
+
+# A sample service, trading, with various states for entries to be in
+service.trading.transfers.pending: "select count(*) from transfers where state = 'submitted'"
+service.trading.transfers.completed: "select count(*) from transfers where state = 'completed'"
+
+# This one should work always, since it doesn't rely on a table, just to show this working, you should see this in your statsd server
+servicename.test.set: "select 5"
