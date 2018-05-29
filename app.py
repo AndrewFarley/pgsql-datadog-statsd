@@ -138,6 +138,7 @@ while True:
     
     for key, query in queries.items():
         # Fetch the value
+        result = None
         try:
             print("Fetching {} - {}".format(key, query))
             result = fetchOne(current_cursor, query)
@@ -153,7 +154,11 @@ while True:
             traceback.print_exception(*exc_info)
             current_conn.rollback()
             continue
-
+        
+        if not result and result != 0:
+            print("Skipping invalid value: {}".format(result))
+            continue
+        
         try:
             # Grab the right helper name based on the last octet from the key
             func_name = key.split('.')[-1]
@@ -172,4 +177,4 @@ while True:
     time_remaining = TIME_BETWEEN_REQUESTS - (time.time() - start)
     if time_remaining > 0:
         print('Waiting for: {} seconds'.format(time_remaining))
-        time.sleep(time_remaining)
+        time.sleep(time_remaining - 0.010)  # 0.010 is on-average the amount of time spent on raw iteration overhead
