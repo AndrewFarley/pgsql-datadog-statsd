@@ -80,6 +80,7 @@ def getPGSQLConnection(retries=0):
         try:
             # print("returning existing cursor connection")
             connection.cursor().execute('select 1') # make sure its alive
+            connection.rollback()
             return connection
         except:
             # print("Connection must be dead...")
@@ -112,48 +113,72 @@ def fetchOne(cur, query):
     return cur.fetchone()[0]
 
 # First, load our queries from any .yaml files within this folder or any subfolders of /app
-queries = {}
-for file in glob.glob("{}/**/*.yaml".format(dir_path)):
-    with open(file) as f:
-        new_queries = yaml.safe_load(f)
-        queries = merge_dicts(queries, new_queries)
+def getQueriesFromFiles():
+    queries = {}
+    for file in glob.glob("{}/**/*.yaml".format(dir_path)):
+        with open(file) as f:
+            new_queries = yaml.safe_load(f)
+            queries = merge_dicts(queries, new_queries)
+    return queries
 
-print("Queries (via yaml)")
+def printQueries(queries):
+    print("Queries (via yaml)")
+    for key, value in queries.items():
+        print("  {} : {}".format(key, value))
+    
+# Then connect to our database and/or make sure the DB connection is functional
+getPGSQLConnection()
+
+# Get our queries
+queries = getQueriesFromFiles()
 if not queries or len(queries) < 1:
     print("  ERROR: NONE FOUND, please mount some into a subfolder of /app")
     time.sleep(60)
     exit(1)
-for key, value in queries.items():
-    print("  {} : {}".format(key, value))
-    
-# Then connect to our database and/or make sure the DB connection is functional
-current_conn = getPGSQLConnection()
-current_cursor = current_conn.cursor()
+printQueries(queries)
 
-# And fetch our queries
+# Our check-for-changes interval and counter
+check_for_changes_interval = 0
+check_for_changes_interval_max = 10
+
+# Our main loop
 while True:
+
     print(separator)
     print("Starting loop at: {}".format(datetime.datetime.now()))
     start = time.time()
     
+    # And re-check our queries for changes once in a while
+    check_for_changes_interval = check_for_changes_interval + 1
+    if check_for_changes_interval >= check_for_changes_interval_max:
+        print("Checking for file changes...")
+        check_for_changes_interval = 0
+        newqueries = getQueriesFromFiles()
+        shared_items = set(queries.items()) & set(newqueries.items())
+        if len(shared_items) != len(queries.items()) or len(shared_items) != len(newqueries.items()):
+            print(separator)
+            print("Updated queries")
+            queries = newqueries
+            printQueries(queries)
+
     for key, query in queries.items():
         # Fetch the value
         result = None
         try:
             print("Fetching {} - {}".format(key, query))
-            result = fetchOne(current_cursor, query)
+            result = fetchOne(connection.cursor(), query)
         except psycopg2.ProgrammingError as e:
             print("Bad query or some other error occurred, skipping key: {}".format(key))
-            current_conn.rollback()
+            connection.rollback()
             exc_info = sys.exc_info()
             traceback.print_exception(*exc_info)
             continue
         except:
-            print("Unknown exception while fetching key")
+            print("Unknown exception while fetching data, exiting...")
             exc_info = sys.exc_info()
             traceback.print_exception(*exc_info)
-            current_conn.rollback()
-            continue
+            connection.rollback()
+            exit(1)
         
         if not result and result != 0:
             print("Skipping invalid value: {}".format(result))
